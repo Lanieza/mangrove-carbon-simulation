@@ -85,110 +85,200 @@
             carbonChart.update();
 
             simCtx.clearRect(0, 0, simCanvas.width, simCanvas.height);
+            
+            drawSea();
 
-            let waveOffset = 100;
+            // Draw Road (Centered)
+            simCtx.fillStyle = "#707070"; // Gray road
+            let roadWidth = 200;
+            let roadX = (simCanvas.width - roadWidth) / 2 - 50;
+            simCtx.fillRect(roadX, 0, roadWidth, simCanvas.height);
 
-            function drawSea() {
-                simCtx.fillStyle = '#a3d5ff';
-                simCtx.fillRect(0, 0, simCanvas.width * 0.3, simCanvas.height);
+            // Draw Lane Markings
+            simCtx.strokeStyle = "white";
+            simCtx.lineWidth = 12;
+            simCtx.setLineDash([20, 20]); // Dashed lines
+            simCtx.beginPath();
+            simCtx.moveTo(roadX + roadWidth / 2, 0);
+            simCtx.lineTo(roadX + roadWidth / 2, simCanvas.height);
+            simCtx.stroke();
+            simCtx.setLineDash([]); // Reset dash style
 
-                let amplitude = 20;  // Wave curve size
-                let frequency = 0.02; // Wave tightness
-                let numWaves = 5;     // Number of overlapping waves
-                let waveSpacing = 2; // Distance between waves
+            // Draw Land (On Top of Road, Right Side)
+            simCtx.fillStyle = "#CD853F"; // Brown for land
+            let landX = roadX + roadWidth; // Right side of the road
+            simCtx.fillRect(landX, 0, simCanvas.width - landX, simCanvas.height);
 
-                simCtx.fillStyle = '#4da6ff';
-                simCtx.beginPath();
+            let carCount = Math.floor(vehicles / 10); // Adjust density
+            
+            if (carPositions.length !== carCount) {
+                generateCarPositions(carCount); // Only update when needed
+            }
 
-                for (let i = 0; i < numWaves; i++) {
-                    let phase = i * Math.PI / numWaves; // Offset each wave slightly
+            carPositions.forEach(car => drawCar(simCtx, car.x, car.y, car.color));
 
-                    simCtx.moveTo(0, 0);
-                    for (let y = 0; y <= simCanvas.height; y += 5) {
-                        let waveX = Math.sin((y + waveOffset + phase) * frequency) * amplitude + 150;
-                        simCtx.lineTo(waveX, y);
-                    }
-                    simCtx.lineTo(0, simCanvas.height); // Close the wave shape
+            generatePeoplePositions(Math.floor(population / 5)); // Adjust density
+            drawPeople(simCtx);
+
+        }
+
+        let peoplePositions = [];
+
+        function generatePeoplePositions(count) {
+            peoplePositions = []; // Reset list
+            let landX = (simCanvas.width - 200) / 2 + 150; // Land starts here
+            let landWidth = simCanvas.width - landX;
+            let personSize = 20;
+            let buffer = 10; // Avoid overlap
+            let maxAttempts = 100;
+
+            for (let i = 0; i < count; i++) {
+                let attempts = 0;
+                let newPerson;
+                let collision;
+
+                do {
+                    let personX = landX + Math.random() * (landWidth - personSize);
+                    let personY = Math.random() * (simCanvas.height - personSize);
+                    newPerson = { x: personX, y: personY };
+                    collision = peoplePositions.some(person => checkCollision(person, newPerson, personSize, personSize, buffer));
+                    attempts++;
+                } while (collision && attempts < maxAttempts);
+
+                if (!collision) {
+                    peoplePositions.push(newPerson);
                 }
-
-                simCtx.closePath();
-                simCtx.fill();
-
-                // Draw natural-looking shoreline
-                simCtx.fillStyle = '#c2a772'; // Sandy color
-                simCtx.beginPath();
-                for (let y = 0; y <= simCanvas.height; y += 10) {
-                    let shorelineX = simCanvas.width * 0.26 + Math.sin((y + waveOffset) * 0.03) * 8;
-                    simCtx.lineTo(shorelineX, y);
-                }
-                simCtx.lineTo(simCanvas.width * 0.5, simCanvas.height);
-                simCtx.lineTo(simCanvas.width * 0.5, 0);
-                simCtx.closePath();
-                simCtx.fill();
-            }
-
-            // Update animation
-            function animateSea() {
-                waveOffset += 1; // Controls wave movement speed
-                simCtx.clearRect(0, 0, simCanvas.width, simCanvas.height);
-                drawSea();
-                requestAnimationFrame(animateSea);
-            }
-
-            // Start animation
-            animateSea();
-
-            // Draw the road
-                simCtx.fillStyle = '#5c5c5c'; // Dark gray for the road
-                let roadStartX = simCanvas.width * 0.5; // Start road at shoreline's right edge
-                let roadWidth = simCanvas.width * 0.2; // Adjust width as needed
-
-                simCtx.fillRect(roadStartX, 0, roadWidth, simCanvas.height);
-
-                // Add lane dividers
-                simCtx.strokeStyle = '#ffffff'; // White dashed lines
-                simCtx.lineWidth = 3;
-                simCtx.setLineDash([15, 10]); // Dashed pattern
-
-                simCtx.beginPath();
-                simCtx.moveTo(roadStartX + roadWidth / 2, 0);
-                simCtx.lineTo(roadStartX + roadWidth / 2, simCanvas.height);
-                simCtx.stroke();
-                simCtx.setLineDash([]); // Reset dashed line
-
-
-            // Draw mangroves
-            simCtx.fillStyle = '#4CAF50';
-            for (let i = 0; i < mangrove / 10; i++) {
-                simCtx.fillRect(30 + i * 10, 180, 8, 20);
-            }
-
-            // Draw houses
-            simCtx.fillStyle = '#FF9800';
-            for (let i = 0; i < houses / 10; i++) {
-                simCtx.fillRect(250 + i * 15, 180, 12, 12);
-            }
-
-            // Draw factories
-            simCtx.fillStyle = '#9E9E9E';
-            for (let i = 0; i < factories / 10; i++) {
-                simCtx.fillRect(350 + i * 15, 170, 12, 20);
-            }
-
-            // Draw vehicles
-            simCtx.fillStyle = '#2196F3';
-            for (let i = 0; i < vehicles / 10; i++) {
-                simCtx.fillRect(450 + i * 12, 190, 10, 10);
-            }
-
-            // Draw population as dots
-            simCtx.fillStyle = '#9C27B0';
-            for (let i = 0; i < population / 10; i++) {
-                simCtx.beginPath();
-                simCtx.arc(480 + i * 8, 170, 4, 0, Math.PI * 2);
-                simCtx.fill();
             }
         }
+
+        // Function to draw people on the land
+        function drawPeople(ctx) {
+            ctx.fillStyle = "#9C27B0"; // Purple for population
+            peoplePositions.forEach(person => {
+                ctx.fillText("👤", person.x, person.y);
+            });
+        }
+
+        function drawCar(ctx, x, y, color) {
+            let carWidth = 40;  
+            let carHeight = 70;  
+
+            // Draw car body
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, carWidth, carHeight);  
+
+            // Roof (Windows Area)
+            ctx.fillStyle = "lightblue";
+            ctx.fillRect(x + 8, y + 15, carWidth - 16, carHeight - 30);
+
+            // Wheels
+            ctx.fillStyle = "black";
+            ctx.fillRect(x - 5, y + 5, 10, 15);   // Front-left wheel
+            ctx.fillRect(x + carWidth - 5, y + 5, 10, 15);  // Front-right wheel
+            ctx.fillRect(x - 5, y + carHeight - 20, 10, 15);  // Rear-left wheel
+            ctx.fillRect(x + carWidth - 5, y + carHeight - 20, 10, 15);  // Rear-right wheel
+
+            // Headlights (Front)
+            ctx.fillStyle = "yellow";
+            ctx.fillRect(x + 10, y - 5, 20, 5);
+
+            // Taillights (Rear)
+            ctx.fillStyle = "red";
+            ctx.fillRect(x + 10, y + carHeight, 20, 5);
+        }
+
+
+
+        let carPositions = []; // Store car positions
+
+        function generateCarPositions(count) {
+            carPositions = []; // Reset the car list
+            let roadX = (simCanvas.width - 200) / 2 - 50;
+            let roadWidth = 200;
+            let carWidth = 30;
+            let carHeight = 50;
+            let buffer = 10; // Extra space to prevent collisions
+            let maxAttempts = 100; // Prevent infinite loops
+            let carColors = ["blue", "red"];
+
+            for (let i = 0; i < count; i++) {
+                let attempts = 0;
+                let newCar;
+                let collision;
+
+                do {
+                    let carX = roadX + Math.random() * (roadWidth - carWidth);
+                    let carY = Math.random() * (simCanvas.height - carHeight);
+                    let color = carColors[Math.floor(Math.random() * carColors.length)];
+                    newCar = { x: carX, y: carY, color: color };
+                    collision = carPositions.some(car => checkCollision(car, newCar, carWidth, carHeight, buffer));
+                    attempts++;
+                } while (collision && attempts < maxAttempts);
+
+                if (!collision) {
+                    carPositions.push(newCar);
+                }
+            }
+        }
+
+        function checkCollision(car1, car2, carWidth, carHeight, buffer = 0) {
+            return (
+                car1.x < car2.x + carWidth + buffer &&
+                car1.x + carWidth + buffer > car2.x &&
+                car1.y < car2.y + carHeight + buffer &&
+                car1.y + carHeight + buffer > car2.y
+            );
+        }
+
+
+        let waveOffset = 0; // Add a wave offset
+
+        function drawSea() {
+            simCtx.fillStyle = '#a3d5ff';
+            simCtx.fillRect(0, 0, simCanvas.width * 0.3, simCanvas.height);
+
+            let amplitude = 20;
+            let frequency = 0.02;
+            let numWaves = 5;
+
+            simCtx.fillStyle = '#4da6ff';
+            simCtx.beginPath();
+
+            for (let i = 0; i < numWaves; i++) {
+                let phase = i * Math.PI / numWaves;
+
+                simCtx.moveTo(0, 0);
+                for (let y = 0; y <= simCanvas.height; y += 5) {
+                    let waveX = Math.sin((y + waveOffset + phase) * frequency) * amplitude + 150;
+                    simCtx.lineTo(waveX, y);
+                }
+                simCtx.lineTo(0, simCanvas.height);
+            }
+
+            simCtx.closePath();
+            simCtx.fill();
+
+            // **Fix Shoreline Drawing**
+            simCtx.fillStyle = '#c2a772'; // Sand color
+            simCtx.beginPath();
+            for (let y = 0; y <= simCanvas.height; y += 10) {
+                let shorelineX = simCanvas.width * 0.26 + Math.sin((y + waveOffset) * 0.02) * 8;
+                simCtx.lineTo(shorelineX, y);
+            }
+            simCtx.lineTo(simCanvas.width * 0.4, simCanvas.height);
+            simCtx.lineTo(simCanvas.width * 0.4, 0);
+            simCtx.closePath();
+            simCtx.fill();
+        }
+
+        function animate() {
+            waveOffset += 1; // Move the wave
+            updateSimulation(); // Redraw the whole simulation
+            requestAnimationFrame(animate); // Loop animation
+        }
+
+        // Start animation loop
+        animate();
 
         document.querySelectorAll('input').forEach(input => input.addEventListener('input', updateSimulation));
         updateSimulation();
