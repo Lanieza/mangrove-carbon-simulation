@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mangrove-Carbon Simulation</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; font-family: Arial, sans-serif; background-color: #e0f7fa; }
+        .container { display: flex; }
+        .controls, canvas { margin: 20px; }
+        .legend { display: flex; gap: 15px; margin-bottom: 10px; }
+        .legend div { display: flex; align-items: center; gap: 8px; font-size: 16px; }
+        .legend i { font-size: 20px; }
+        .control-group { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Mangrove-Carbon Simulation</h1>
+
+    <!-- Updated Legend with Icons -->
+    <div class="legend">
+        <div><i class="fas fa-tree" style="color:#4CAF50;"></i> Mangrove</div>
+        <div><i class="fas fa-car" style="color:#2196F3;"></i> Vehicles</div>
+        <div><i class="fas fa-home" style="color:#FF9800;"></i> Houses</div>
+        <div><i class="fas fa-industry" style="color:#9E9E9E;"></i> Factories</div>
+        <div><i class="fas fa-users" style="color:#9C27B0;"></i> Population</div>
+    </div>
+
+    <div class="container">
+        <div class="controls">
+            <div class="control-group">
+                <label>Sea Temperature:</label> 
+                <input type="range" id="temp" min="20" max="35" value="25" oninput="document.getElementById('tempValue').value = this.value">
+                <input type="number" id="tempValue" min="20" max="35" value="25" oninput="document.getElementById('temp').value = this.value">
+            </div>
+            <div class="control-group">
+                <label>Mangrove Coverage:</label>
+                <input type="range" id="mangrove" min="0" max="100" value="50" oninput="document.getElementById('mangroveValue').value = this.value">
+                <input type="number" id="mangroveValue" min="0" max="100" value="50" oninput="document.getElementById('mangrove').value = this.value">
+            </div>
+            <div class="control-group">
+                <label>Vehicles:</label>
+                <input type="range" id="vehicles" min="0" max="100" value="50" oninput="document.getElementById('vehiclesValue').value = this.value">
+                <input type="number" id="vehiclesValue" min="0" max="100" value="50" oninput="document.getElementById('vehicles').value = this.value">
+            </div>
+            <div class="control-group">
+                <label>Houses:</label>
+                <input type="range" id="houses" min="0" max="100" value="50" oninput="document.getElementById('housesValue').value = this.value">
+                <input type="number" id="housesValue" min="0" max="100" value="50" oninput="document.getElementById('houses').value = this.value">
+            </div>
+            <div class="control-group">
+                <label>Factories:</label>
+                <input type="range" id="factories" min="0" max="100" value="50" oninput="document.getElementById('factoriesValue').value = this.value">
+                <input type="number" id="factoriesValue" min="0" max="100" value="50" oninput="document.getElementById('factories').value = this.value">
+            </div>
+            <div class="control-group">
+                <label>Population:</label>
+                <input type="range" id="population" min="0" max="100" value="50" oninput="document.getElementById('populationValue').value = this.value">
+                <input type="number" id="populationValue" min="0" max="100" value="50" oninput="document.getElementById('population').value = this.value">
+            </div>
+        </div>
+        <canvas id="simulationCanvas" width="300" height="300" style="border: 1px solid black;"></canvas>
+    </div>
+    <canvas id="carbonGraph" width="600" height="300"></canvas>
+
+    <script>
+        const ctx = document.getElementById('carbonGraph').getContext('2d');
+        const simulationCanvas = document.getElementById('simulationCanvas');
+        const simCtx = simulationCanvas.getContext('2d');
+
+        let carbonData = Array(12).fill(50);
+        const carbonChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array.from({ length: 12 }, (_, i) => `${i + 1} Month`),
+                datasets: [{ label: 'Carbon Level', data: carbonData, borderColor: 'red', fill: false }]
+            },
+            options: { responsive: false }
+        });
+
+        function updateSimulation() {
+            let temp = document.getElementById('temp').value;
+            let mangrove = document.getElementById('mangrove').value;
+            let vehicles = document.getElementById('vehicles').value;
+            let houses = document.getElementById('houses').value;
+            let factories = document.getElementById('factories').value;
+            let population = document.getElementById('population').value;
+            
+            // ( code meaning: This is a baseline carbon level (starting value) ).
+            // ( - mangrove * 0.5 More mangroves reduce carbon levels because mangroves absorb carbon.)
+            // ( + vehicles * 0.3 More vehicles increase carbon levels because they emit CO₂.)
+            // ( + factories * 0.4 More factories increase carbon levels because they emit pollutants.)
+            // ( + houses * 0.2 More houses increase carbon levels (due to energy use, heating, etc.)
+            // (+ population * 0.2 A larger population increases carbon levels due to more energy and resource consumption.)
+            // ( + (temp - 25) * 0.5
+                // This adjusts carbon levels based on sea temperature changes.
+                // If the temperature is above 25°C, carbon increases. If it's below 25°C, carbon decreases.
+                // The 0.5 factor means each degree above/below 25°C affects carbon by 0.5 units.
+            let carbonLevel = 100 - mangrove * 0.5 + vehicles * 0.3 + factories * 0.4 + houses * 0.2 + population * 0.2 + (temp - 25) * 0.5;
+            
+            carbonData.push(carbonLevel);
+            carbonData.shift();
+            carbonChart.update();
+
+            simCtx.clearRect(0, 0, simulationCanvas.width, simulationCanvas.height);
+            
+            // Draw mangroves
+            simCtx.fillStyle = '#4CAF50';
+            simCtx.fillRect(50, 200 - mangrove, 50, mangrove);
+            
+            // Draw vehicles
+            simCtx.fillStyle = '#2196F3';
+            simCtx.fillRect(120, 250 - vehicles, 50, vehicles);
+            
+            // Draw houses
+            simCtx.fillStyle = '#FF9800';
+            simCtx.fillRect(190, 250 - houses, 50, houses);
+            
+            // Draw factories
+            simCtx.fillStyle = '#9E9E9E';
+            simCtx.fillRect(260, 250 - factories, 50, factories);
+            
+            // Draw population representation
+            simCtx.fillStyle = '#9C27B0';
+            simCtx.fillRect(330, 250 - population, 50, population);
+        }
+
+        document.querySelectorAll('input').forEach(input => input.addEventListener('input', updateSimulation));
+        updateSimulation();
+    </script>
+</body>
+</html>

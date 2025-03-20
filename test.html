@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mangrove-Carbon Simulation</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; font-family: Arial, sans-serif; background-color: #e0f7fa; }
+        .container { display: flex; }
+        .controls, canvas { margin: 20px; }
+        .legend { display: flex; gap: 15px; margin-bottom: 10px; }
+        .legend div { display: flex; align-items: center; gap: 8px; font-size: 16px; }
+        .legend i { font-size: 20px; }
+        .control-group { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Mangrove-Carbon Simulation</h1>
+    <div class="legend">
+        <div><i class="fas fa-tree" style="color:#4CAF50;"></i> Mangrove</div>
+        <div><i class="fas fa-car" style="color:#2196F3;"></i> Vehicles</div>
+        <div><i class="fas fa-home" style="color:#FF9800;"></i> Houses</div>
+        <div><i class="fas fa-industry" style="color:#9E9E9E;"></i> Factories</div>
+        <div><i class="fas fa-users" style="color:#9C27B0;"></i> Population</div>
+    </div>
+    <div class="container">
+        <div class="controls">
+            <div class="control-group">
+                <label>Sea Temperature:</label> 
+                <input type="range" id="temp" min="20" max="35" value="25" oninput="updateSimulation()">
+            </div>
+            <div class="control-group">
+                <label>Mangrove Coverage:</label>
+                <input type="range" id="mangrove" min="0" max="100" value="50" oninput="updateSimulation()">
+            </div>
+            <div class="control-group">
+                <label>Vehicles:</label>
+                <input type="range" id="vehicles" min="0" max="100" value="50" oninput="updateSimulation()">
+            </div>
+            <div class="control-group">
+                <label>Houses:</label>
+                <input type="range" id="houses" min="0" max="100" value="50" oninput="updateSimulation()">
+            </div>
+            <div class="control-group">
+                <label>Factories:</label>
+                <input type="range" id="factories" min="0" max="100" value="50" oninput="updateSimulation()">
+            </div>
+            <div class="control-group">
+                <label>Population:</label>
+                <input type="range" id="population" min="0" max="100" value="50" oninput="updateSimulation()">
+            </div>
+        </div>
+        <canvas id="simulationCanvas" width="1000" height="650" style="border: 1px solid black;"></canvas>
+    </div>
+    <canvas id="carbonGraph" width="600" height="300"></canvas>
+    
+    <script>
+        const ctx = document.getElementById('carbonGraph').getContext('2d');
+        const simCanvas = document.getElementById('simulationCanvas');
+        const simCtx = simCanvas.getContext('2d');
+
+        let carbonData = Array(12).fill(50);
+        const carbonChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array.from({ length: 12 }, (_, i) => `${i + 1} Month`),
+                datasets: [{ label: 'Carbon Level', data: carbonData, borderColor: 'red', fill: false }]
+            },
+            options: { responsive: false }
+        });
+
+        function updateSimulation() {
+            let temp = document.getElementById('temp').value;
+            let mangrove = document.getElementById('mangrove').value;
+            let vehicles = document.getElementById('vehicles').value;
+            let houses = document.getElementById('houses').value;
+            let factories = document.getElementById('factories').value;
+            let population = document.getElementById('population').value;
+
+            let carbonLevel = 100 - mangrove * 0.5 + vehicles * 0.3 + factories * 0.4 + houses * 0.2 + population * 0.2 + (temp - 25) * 0.5;
+            carbonData.push(carbonLevel);
+            carbonData.shift();
+            carbonChart.update();
+
+            simCtx.clearRect(0, 0, simCanvas.width, simCanvas.height);
+
+            // Draw sea
+
+            let waveOffset = 0;
+
+            function drawSea() {
+                simCtx.fillStyle = '#4da6ff';
+                simCtx.fillRect(0, 0, simCanvas.width * 0.4, simCanvas.height);
+
+                // Draw animated waves
+                simCtx.fillStyle = '#ffffff88'; // Light blue for wave highlights
+                simCtx.beginPath();
+                simCtx.moveTo(0, simCanvas.height * 0.8);
+                for (let x = 0; x < simCanvas.width * 0.3; x += 10) {
+                    let waveHeight = Math.sin((x + waveOffset) * 0.05) * 8; // Smooth waves
+                    simCtx.lineTo(x, simCanvas.height * 0.9 + waveHeight);
+                }
+                simCtx.lineTo(simCanvas.width * 0.3, simCanvas.height);
+                simCtx.lineTo(0, simCanvas.height);
+                simCtx.closePath();
+                simCtx.fill();
+            }
+
+            // Update animation
+            function animateSea() {
+                waveOffset += 1; // Controls speed of waves
+                simCtx.clearRect(0, 0, simCanvas.width, simCanvas.height);
+                drawSea();
+                requestAnimationFrame(animateSea);
+            }
+
+            // Start animation
+            animateSea();
+
+            // Draw mangroves
+            simCtx.fillStyle = '#4CAF50';
+            for (let i = 0; i < mangrove / 10; i++) {
+                simCtx.fillRect(30 + i * 10, 180, 8, 20);
+            }
+
+            // Draw houses
+            simCtx.fillStyle = '#FF9800';
+            for (let i = 0; i < houses / 10; i++) {
+                simCtx.fillRect(250 + i * 15, 180, 12, 12);
+            }
+
+            // Draw factories
+            simCtx.fillStyle = '#9E9E9E';
+            for (let i = 0; i < factories / 10; i++) {
+                simCtx.fillRect(350 + i * 15, 170, 12, 20);
+            }
+
+            // Draw vehicles
+            simCtx.fillStyle = '#2196F3';
+            for (let i = 0; i < vehicles / 10; i++) {
+                simCtx.fillRect(450 + i * 12, 190, 10, 10);
+            }
+
+            // Draw population as dots
+            simCtx.fillStyle = '#9C27B0';
+            for (let i = 0; i < population / 10; i++) {
+                simCtx.beginPath();
+                simCtx.arc(480 + i * 8, 170, 4, 0, Math.PI * 2);
+                simCtx.fill();
+            }
+        }
+
+        document.querySelectorAll('input').forEach(input => input.addEventListener('input', updateSimulation));
+        updateSimulation();
+    </script>
+</body>
+</html>
