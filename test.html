@@ -86,31 +86,50 @@
 
             simCtx.clearRect(0, 0, simCanvas.width, simCanvas.height);
 
-            // Draw sea
-
-            let waveOffset = 0;
+            let waveOffset = 100;
 
             function drawSea() {
-                simCtx.fillStyle = '#4da6ff';
-                simCtx.fillRect(0, 0, simCanvas.width * 0.4, simCanvas.height);
+                simCtx.fillStyle = '#a3d5ff';
+                simCtx.fillRect(0, 0, simCanvas.width * 0.3, simCanvas.height);
 
-                // Draw animated waves
-                simCtx.fillStyle = '#ffffff88'; // Light blue for wave highlights
+                let amplitude = 20;  // Wave curve size
+                let frequency = 0.02; // Wave tightness
+                let numWaves = 5;     // Number of overlapping waves
+                let waveSpacing = 2; // Distance between waves
+
+                simCtx.fillStyle = '#4da6ff';
                 simCtx.beginPath();
-                simCtx.moveTo(0, simCanvas.height * 0.8);
-                for (let x = 0; x < simCanvas.width * 0.3; x += 10) {
-                    let waveHeight = Math.sin((x + waveOffset) * 0.05) * 8; // Smooth waves
-                    simCtx.lineTo(x, simCanvas.height * 0.9 + waveHeight);
+
+                for (let i = 0; i < numWaves; i++) {
+                    let phase = i * Math.PI / numWaves; // Offset each wave slightly
+
+                    simCtx.moveTo(0, 0);
+                    for (let y = 0; y <= simCanvas.height; y += 5) {
+                        let waveX = Math.sin((y + waveOffset + phase) * frequency) * amplitude + 150;
+                        simCtx.lineTo(waveX, y);
+                    }
+                    simCtx.lineTo(0, simCanvas.height); // Close the wave shape
                 }
-                simCtx.lineTo(simCanvas.width * 0.3, simCanvas.height);
-                simCtx.lineTo(0, simCanvas.height);
+
+                simCtx.closePath();
+                simCtx.fill();
+
+                // Draw natural-looking shoreline
+                simCtx.fillStyle = '#c2a772'; // Sandy color
+                simCtx.beginPath();
+                for (let y = 0; y <= simCanvas.height; y += 10) {
+                    let shorelineX = simCanvas.width * 0.26 + Math.sin((y + waveOffset) * 0.03) * 8;
+                    simCtx.lineTo(shorelineX, y);
+                }
+                simCtx.lineTo(simCanvas.width * 0.5, simCanvas.height);
+                simCtx.lineTo(simCanvas.width * 0.5, 0);
                 simCtx.closePath();
                 simCtx.fill();
             }
 
             // Update animation
             function animateSea() {
-                waveOffset += 1; // Controls speed of waves
+                waveOffset += 1; // Controls wave movement speed
                 simCtx.clearRect(0, 0, simCanvas.width, simCanvas.height);
                 drawSea();
                 requestAnimationFrame(animateSea);
@@ -118,6 +137,25 @@
 
             // Start animation
             animateSea();
+
+            // Draw the road
+                simCtx.fillStyle = '#5c5c5c'; // Dark gray for the road
+                let roadStartX = simCanvas.width * 0.5; // Start road at shoreline's right edge
+                let roadWidth = simCanvas.width * 0.2; // Adjust width as needed
+
+                simCtx.fillRect(roadStartX, 0, roadWidth, simCanvas.height);
+
+                // Add lane dividers
+                simCtx.strokeStyle = '#ffffff'; // White dashed lines
+                simCtx.lineWidth = 3;
+                simCtx.setLineDash([15, 10]); // Dashed pattern
+
+                simCtx.beginPath();
+                simCtx.moveTo(roadStartX + roadWidth / 2, 0);
+                simCtx.lineTo(roadStartX + roadWidth / 2, simCanvas.height);
+                simCtx.stroke();
+                simCtx.setLineDash([]); // Reset dashed line
+
 
             // Draw mangroves
             simCtx.fillStyle = '#4CAF50';
