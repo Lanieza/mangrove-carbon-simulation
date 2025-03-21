@@ -109,7 +109,10 @@
             initializeBuilding(buildings);
             drawBuilding(simCtx);
 
-            //draw house 
+            // Draw houses
+            initializeHouses(houses);
+            drawHouses(simCtx);
+
 
             //draw people
             initializePeople(population);
@@ -168,11 +171,15 @@
 
         function generateBuildingPositions(count) {
             buildingPositions = []; // Reset list
-            let landX = (simCanvas.width - 200) / 2 + 150; // Land starts here
+            let landX = (simCanvas.width - 200) / 2 + 200; // Land starts here
             let landWidth = simCanvas.width - landX;
-            let buildingSize = 50;
-            let buffer = 10; // Avoid overlap
+            let buildingWidth = 40;  
+            let buildingHeight = 120; 
+            let buffer = 15; // Avoid overlap
             let maxAttempts = 100;
+
+            let landY = 50; // Ensure buildings start higher up
+            let landHeight = simCanvas.height - landY - buildingHeight - buffer; 
 
             for (let i = 0; i < count; i++) {
                 let attempts = 0;
@@ -180,19 +187,20 @@
                 let collision;
 
                 do {
-                    let buildingX = landX + Math.random() * (landWidth - buildingSize);
-                    let buildingY = Math.random() * (simCanvas.height - buildingSize);
+                    let buildingX = landX + Math.random() * (landWidth - buildingWidth - buffer);
+                    let buildingY = landY + Math.random() * (landHeight - buffer); // Spread across land
+
                     newBuilding = { x: buildingX, y: buildingY };
 
                     // Check for collision with other buildings
                     collision = buildingPositions.some(building => 
-                        checkBuildingCollision(building, newBuilding, buildingSize, buildingSize, buffer)
+                        checkBuildingCollision(building, newBuilding, buildingWidth, buildingHeight, buffer)
                     );
 
                     // Check for collision with houses
                     if (!collision) {
                         collision = housePositions.some(house => 
-                            checkBuildingCollision(house, newBuilding, buildingSize, buildingSize, buffer)
+                            checkBuildingCollision(house, newBuilding, buildingWidth, buildingHeight, buffer)
                         );
                     }
 
@@ -203,40 +211,144 @@
                     buildingPositions.push(newBuilding);
                 }
             }
-            // Trim extra buildings if count is reduced
-            buildingPositions.length = count;
+
+            buildingPositions.length = count; // Trim extra buildings if count is reduced
         }
 
-        function checkBuildingCollision(building1, building2, width, height, buffer = 0) {
+        function checkBuildingCollision(a, b, width, height, buffer) {
             return (
-                building1.x < building2.x + width + buffer &&
-                building1.x + width + buffer > building2.x &&
-                building1.y < building2.y + height + buffer &&
-                building1.y + height + buffer > building2.y
+                a.x < b.x + width + buffer &&
+                a.x + width + buffer > b.x &&
+                a.y < b.y + height + buffer &&
+                a.y + height + buffer > b.y
             );
         }
 
-
-        let housePositions = [];
+        // Draw houses
         function drawHouses(ctx) {
             housePositions.forEach(house => {
+                let houseWidth = 40;
+                let houseHeight = 30;
+                let roofHeight = 20;
+                let brickSize = 6;
+
+                // House Body (Brick Wall)
                 ctx.fillStyle = "#FF9800";
-                ctx.fillRect(house.x, house.y, 40, 30);
-                
+                ctx.fillRect(house.x, house.y, houseWidth, houseHeight);
+
+                // Draw bricks
+                ctx.strokeStyle = "#D2691E";
+                ctx.lineWidth = 1;
+                for (let y = house.y; y < house.y + houseHeight; y += brickSize) {
+                    for (let x = house.x; x < house.x + houseWidth; x += brickSize) {
+                        let offset = (y % (brickSize * 2) === 0) ? 0 : brickSize / 2;
+                        ctx.strokeRect(x + offset, y, brickSize, brickSize);
+                    }
+                }
+
+                // Outline for the house
+                ctx.strokeStyle = "black";
+                ctx.lineWidth = 2;
+                ctx.strokeRect(house.x, house.y, houseWidth, houseHeight);
+
+                // Roof
                 ctx.fillStyle = "#D84315";
                 ctx.beginPath();
                 ctx.moveTo(house.x, house.y);
-                ctx.lineTo(house.x + 20, house.y - 20);
-                ctx.lineTo(house.x + 40, house.y);
+                ctx.lineTo(house.x + houseWidth / 2, house.y - roofHeight);
+                ctx.lineTo(house.x + houseWidth, house.y);
                 ctx.closePath();
                 ctx.fill();
-            });
-        } 
+                ctx.stroke();
 
+                // Windows
+                ctx.fillStyle = "#ADD8E6"; // Light blue glass effect
+                let windowSize = 8;
+                let windowSpacing = 6;
+                ctx.fillRect(house.x + windowSpacing, house.y + 5, windowSize, windowSize);
+                ctx.fillRect(house.x + houseWidth - windowSpacing - windowSize, house.y + 5, windowSize, windowSize);
+                ctx.strokeRect(house.x + windowSpacing, house.y + 5, windowSize, windowSize);
+                ctx.strokeRect(house.x + houseWidth - windowSpacing - windowSize, house.y + 5, windowSize, windowSize);
+
+                // Door
+                ctx.fillStyle = "brown";
+                let doorWidth = 10, doorHeight = 15;
+                let doorX = house.x + (houseWidth - doorWidth) / 2;
+                let doorY = house.y + houseHeight - doorHeight;
+                ctx.fillRect(doorX, doorY, doorWidth, doorHeight);
+                ctx.strokeRect(doorX, doorY, doorWidth, doorHeight);
+
+                // Doorknob
+                ctx.fillStyle = "gold";
+                ctx.beginPath();
+                ctx.arc(doorX + doorWidth - 2, doorY + doorHeight / 2, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+        
+        let housePositions = [];
+        // Initialize houses
+        function initializeHouses(houses) {
+            let count = Math.floor(houses / 10); // Adjust density
+            if (housePositions.length !== count) {
+                generateHousePositions(count);
+            }
+        }
+
+        function generateHousePositions(count) {
+            housePositions = []; // Reset list
+            let landX = (simCanvas.width - 200) / 2 + 150; // Land starts here
+            let landWidth = simCanvas.width - landX;
+            let houseWidth = 40, houseHeight = 30;
+            let buffer = 20; // Avoid overlap
+            let maxAttempts = 100;
+
+            let landY = 50; // Start higher to cover more land
+            let landHeight = simCanvas.height - landY - houseHeight - buffer; 
+
+            for (let i = 0; i < count; i++) {
+                let attempts = 0;
+                let newHouse;
+                let collision;
+
+                do {
+                    let houseX = landX + Math.random() * (landWidth - houseWidth - buffer);
+                    let houseY = landY + Math.random() * (landHeight - buffer); // Spread across land
+
+                    newHouse = { x: houseX, y: houseY };
+
+                    // Check for collision with other houses
+                    collision = housePositions.some(house =>
+                        checkCollision(house, newHouse, houseWidth, houseHeight, buffer)
+                    );
+
+                    // Check for collision with buildings
+                    if (!collision) {
+                        collision = buildingPositions.some(building =>
+                            checkCollision(building, newHouse, 40, 120, buffer)
+                        );
+                    }
+
+                    // Check for collision with people
+                    if (!collision) {
+                        collision = peoplePositions.some(person =>
+                            checkCollision(person, newHouse, houseWidth, houseHeight, buffer)
+                        );
+                    }
+
+                    attempts++;
+                } while (collision && attempts < maxAttempts);
+
+                if (!collision) {
+                    housePositions.push(newHouse);
+                }
+            }
+        }
+        
         // draw People
         // Call this once when population changes, NOT in updateSimulation
         function initializePeople(population) {
-            let count = Math.floor(population / 10);
+            let count = Math.floor(population / 5);
             if (peoplePositions.length !== count) {
                 generatePeoplePositions(count);
             }
@@ -263,12 +375,13 @@
         }
 
         let peoplePositions = [];
+
         function generatePeoplePositions(count) {
             peoplePositions = []; // Reset list
             let landX = (simCanvas.width - 200) / 2 + 150; // Land starts here
             let landWidth = simCanvas.width - landX;
             let personSize = 20;
-            let buffer = 10; // Avoid overlap
+            let buffer = 15; // Avoid overlap
             let maxAttempts = 100;
 
             for (let i = 0; i < count; i++) {
@@ -282,11 +395,34 @@
                     newPerson = { x: personX, y: personY };
 
                     // Check collision with other people
-                    collision = peoplePositions.some(person => checkPersonCollision(person, newPerson, personSize, personSize, buffer));
-                    
+                    collision = peoplePositions.some(person => 
+                        checkCollision(person, newPerson, personSize, personSize, buffer)
+                    );
+
+                    // Check collision with buildings
+                    if (!collision) {
+                        collision = buildingPositions.some(building => 
+                            checkCollision(
+                                building, 
+                                newPerson, 
+                                40, // Building width
+                                120, // Building height
+                                buffer
+                            )
+                        );
+                    }
+
                     // Check collision with houses
                     if (!collision) {
-                        collision = housePositions.some(house => checkPersonCollision(house, newPerson, personSize, personSize, buffer));
+                        collision = housePositions.some(house => 
+                            checkCollision(
+                                house, 
+                                newPerson, 
+                                40, // House width (assuming it's the same as in generateHousePositions)
+                                30, // House height
+                                buffer
+                            )
+                        );
                     }
 
                     attempts++;
@@ -297,9 +433,19 @@
                 }
             }
         }
-        
+
+        // **Generalized function to check collisions between two rectangular objects**
+        function checkCollision(obj1, obj2, obj1Width, obj1Height, buffer) {
+            return (
+                obj1.x < obj2.x + obj1Width + buffer &&
+                obj1.x + obj1Width + buffer > obj2.x &&
+                obj1.y < obj2.y + obj1Height + buffer &&
+                obj1.y + obj1Height + buffer > obj2.y
+            );
+        }
+                
         //check collision for people only 
-        function checkPersonCollision(person1, person2, width, height, buffer = 0) {
+        function checkPersonCollision(person1, person2, width, height, buffer) {
             return (
                 person1.x < person2.x + width + buffer &&
                 person1.x + width + buffer > person2.x &&
@@ -337,8 +483,8 @@
 
         //car drawing
         function drawCar(ctx, x, y, color) { 
-            let carWidth = 30;  // Reduced width
-            let carHeight = 50; // Reduced height
+            let carWidth = 20;  // Smaller width
+            let carHeight = 35; // Smaller height
 
             // Draw car body
             ctx.fillStyle = color;
@@ -351,33 +497,32 @@
 
             // Roof (Windows Area)
             ctx.fillStyle = "lightblue";
-            ctx.fillRect(x + 6, y + 10, carWidth - 12, carHeight - 25);
-            ctx.strokeRect(x + 6, y + 10, carWidth - 12, carHeight - 25); // Outline for windows
+            ctx.fillRect(x + 4, y + 6, carWidth - 8, carHeight - 18);
+            ctx.strokeRect(x + 4, y + 6, carWidth - 8, carHeight - 18); // Outline for windows
 
-            // Wheels
+            // Wheels (Smaller)
             ctx.fillStyle = "black";
-            ctx.fillRect(x - 3, y + 3, 8, 12);   // Front-left wheel
-            ctx.fillRect(x + carWidth - 5, y + 3, 8, 12);  // Front-right wheel
-            ctx.fillRect(x - 3, y + carHeight - 15, 8, 12);  // Rear-left wheel
-            ctx.fillRect(x + carWidth - 5, y + carHeight - 15, 8, 12);  // Rear-right wheel
+            ctx.fillRect(x - 2, y + 2, 5, 8);   // Front-left wheel
+            ctx.fillRect(x + carWidth - 3, y + 2, 5, 8);  // Front-right wheel
+            ctx.fillRect(x - 2, y + carHeight - 10, 5, 8);  // Rear-left wheel
+            ctx.fillRect(x + carWidth - 3, y + carHeight - 10, 5, 8);  // Rear-right wheel
 
             // Headlights (Front)
             ctx.fillStyle = "yellow";
-            ctx.fillRect(x + 8, y - 3, 14, 3);
-            ctx.strokeRect(x + 8, y - 3, 14, 3); // Outline for headlights
+            ctx.fillRect(x + 5, y - 2, 10, 2);
+            ctx.strokeRect(x + 5, y - 2, 10, 2); // Outline for headlights
 
             // Taillights (Rear)
             ctx.fillStyle = "red";
-            ctx.fillRect(x + 8, y + carHeight, 14, 3);
-            ctx.strokeRect(x + 8, y + carHeight, 14, 3); // Outline for taillights
+            ctx.fillRect(x + 5, y + carHeight, 10, 2);
+            ctx.strokeRect(x + 5, y + carHeight, 10, 2); // Outline for taillights
         }
-
 
         let carPositions = []; // Store car positions
         function generateCarPositions(count) {
             carPositions = []; // Reset the car list
-            let roadX = (simCanvas.width - 200) / 2 - 50;
-            let roadWidth = 200;
+            let roadX = (simCanvas.width - 200) / 2 - 10;
+            let roadWidth = 130;
             let carWidth = 30;
             let carHeight = 50;
             let buffer = 10; // Extra space to prevent collisions
