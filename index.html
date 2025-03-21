@@ -175,7 +175,7 @@
             let landWidth = simCanvas.width - landX;
             let buildingWidth = 40;  
             let buildingHeight = 120; 
-            let buffer = 15; // Avoid overlap
+            let buffer = 20; // Avoid overlap
             let maxAttempts = 100;
 
             let landY = 50; // Ensure buildings start higher up
@@ -201,6 +201,13 @@
                     if (!collision) {
                         collision = housePositions.some(house => 
                             checkBuildingCollision(house, newBuilding, buildingWidth, buildingHeight, buffer)
+                        );
+                    }
+
+                    // Check for collision with people
+                    if (!collision) {
+                        collision = peoplePositions.some(person =>
+                            checkCollision(person, newBuilding, buildingWidth, buildingHeight, buffer)
                         );
                     }
 
@@ -238,10 +245,10 @@
 
                 // Draw bricks
                 ctx.strokeStyle = "#D2691E";
-                ctx.lineWidth = 1;
+                ctx.lineWidth = 2;
                 for (let y = house.y; y < house.y + houseHeight; y += brickSize) {
                     for (let x = house.x; x < house.x + houseWidth; x += brickSize) {
-                        let offset = (y % (brickSize * 2) === 0) ? 0 : brickSize / 2;
+                        let offset = (y % (brickSize * 2) === 0) ? 0 : brickSize / 2 - 4;
                         ctx.strokeRect(x + offset, y, brickSize, brickSize);
                     }
                 }
@@ -357,18 +364,17 @@
         function drawPeople(ctx) {
             peoplePositions.forEach(person => {
                 // Draw Head (Circle)
-                ctx.fillStyle = "#FDD835"; // Yellow head
+                ctx.fillStyle = person.headColor;
                 ctx.beginPath();
                 ctx.arc(person.x, person.y, 5, 0, Math.PI * 2);
                 ctx.fill();
-                // ctx.stroke();
 
                 // Draw Body (Rectangle)
-                ctx.fillStyle = "#9C27B0"; // Purple shirt
+                ctx.fillStyle = person.shirtColor;
                 ctx.fillRect(person.x - 5, person.y + 10, 10, 15);
 
                 // Draw Legs (Two small rectangles)
-                ctx.fillStyle = "black";
+                ctx.fillStyle = person.pantsColor;
                 ctx.fillRect(person.x - 5, person.y + 25, 4, 10);
                 ctx.fillRect(person.x + 1, person.y + 25, 4, 10);
             });
@@ -384,6 +390,12 @@
             let buffer = 15; // Avoid overlap
             let maxAttempts = 100;
 
+            // Define color options
+            const headColors = ["#FDD835", "#FFCCBC", "#FFC107", "#D4A373"];
+            const shirtColors = ["#9C27B0", "#1976D2", "#388E3C", "#FF5722", "#E91E63"];
+            const pantsColors = ["black", "navy", "gray", "brown", "#795548"];
+
+
             for (let i = 0; i < count; i++) {
                 let attempts = 0;
                 let newPerson;
@@ -393,6 +405,19 @@
                     let personX = landX + Math.random() * (landWidth - personSize);
                     let personY = Math.random() * (simCanvas.height - personSize);
                     newPerson = { x: personX, y: personY };
+
+                    // Assign random colors **once** when generating the person
+                    let headColor = headColors[Math.floor(Math.random() * headColors.length)];
+                    let shirtColor = shirtColors[Math.floor(Math.random() * shirtColors.length)];
+                    let pantsColor = pantsColors[Math.floor(Math.random() * pantsColors.length)];
+                    
+                    newPerson = { 
+                        x: personX, 
+                        y: personY,
+                        headColor: headColor, 
+                        shirtColor: shirtColor, 
+                        pantsColor: pantsColor 
+                    };
 
                     // Check collision with other people
                     collision = peoplePositions.some(person => 
