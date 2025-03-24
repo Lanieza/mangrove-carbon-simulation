@@ -8,13 +8,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body { display: flex; flex-direction: column; align-items: center; font-family: Arial, sans-serif; background-color: #e0f7fa; }
-        .container { display: flex; }
+        .container { display: flex;  align-items: flex-start;}
         .controls, canvas { margin-left: 10px; }
         .legend { display: flex; gap: 5px; margin-bottom: 10px; }
         .legend div { display: flex; align-items: center; gap: 5px; font-size: 16px; }
         .legend i { font-size: 20px; }
         .control-group { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
-        #carbonGraph { margin-top: 50px; /* Move down */ margin-right: 80px; /* Move right */}
+        .graph-container {width: 30%; padding-right: 10px;}
+        #carbonGraph {border: 1px solid black;background-color: white;}
     </style>
 </head>
 <body>
@@ -32,78 +33,142 @@
         </div>
     </div>    
     <div class="container">
+        <!-- Left side: Carbon Graph -->
+        <div class="graph-container">
+            <canvas id="carbonGraph" width="400" height="300"></canvas>
+        </div>
+
         <div class="controls">
             <div class="control-group">
-                <label>Sea Temperature:</label> 
-                <input type="range" id="temp" min="20" max="35" value="25" oninput="updateSimulation()">
+                <label>Mangroves: <span id="mangrovesValue">0</span></label>
+                <input type="range" id="mangrove" min="0" max="100" value="0" oninput="updateSimulation()">
             </div>
             <div class="control-group">
-                <label>Mangrove Coverage:</label>
-                <input type="range" id="mangrove" min="0" max="100" value="50" oninput="updateSimulation()">
+                <label>Sea Temperature: <span id="seaTempValue">0</span>°C</label>
+                <input type="range" id="temp" min="20" max="25" value="0" oninput="updateSimulation()">
             </div>
             <div class="control-group">
-                <label>Vehicles:</label>
-                <input type="range" id="vehicles" min="0" max="100" value="50" oninput="updateSimulation()">
+                <label>Vehicles: <span id="vehiclesValue">0</span></label>
+                <input type="range" id="vehicles" min="0" max="25" value="0" oninput="updateSimulation()">
             </div>
             <div class="control-group">
-                <label>Houses:</label>
-                <input type="range" id="houses" min="0" max="100" value="50" oninput="updateSimulation()">
+                <label>Houses: <span id="housesValue">0</span></label>
+                <input type="range" id="houses" min="0" max="25" value="0" oninput="updateSimulation()">
             </div>
             <div class="control-group">
-                <label>Buildings:</label>
-                <input type="range" id="buildings" min="0" max="100" value="50" oninput="updateSimulation()">
+                <label>Buildings: <span id="buildingsValue">0</span></label>
+                <input type="range" id="buildings" min="0" max="25" value="0" oninput="updateSimulation()">
             </div>
             <div class="control-group">
-                <label>Population:</label>
-                <input type="range" id="population" min="0" max="100" value="50" oninput="updateSimulation()">
+                <label>Population: <span id="peopleValue">0</span></label>
+                <input type="range" id="population" min="0" max="25" value="0" oninput="updateSimulation()">
             </div>
-            
-            <canvas id="carbonGraph" width="600" height="450"></canvas>
         </div>
         <canvas id="simulationCanvas" width="1200" height="650" style="border: 1px solid black;"></canvas>
         
     </div>
+    <!-- <canvas id="carbonGraph" width="600" height="300"></canvas> -->
     
     <script>
-        //for magrove-carbon graph
-        const ctx = document.getElementById('carbonGraph').getContext('2d');
+
         const simCanvas = document.getElementById('simulationCanvas');
         const simCtx = simCanvas.getContext('2d');
-        let carbonData = Array(12).fill(50);
-        const carbonChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: Array.from({ length: 12 }, (_, i) => `${i + 1} Month`),
-                datasets: [{ label: 'Carbon Level', data: carbonData, borderColor: 'red', fill: false }]
-            },
-            options: { responsive: false }
-        });
+
+        const ctx = document.getElementById("carbonGraph").getContext("2d");
+        // Initial Carbon and Mangrove Data
+        let years = ["Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Year 6"];
+        let carbonData = [200, 180, 160, 140, 120, 100];  // Initial carbon values
         
+        // Create Chart.js Graph
+        let carbonChart = new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: years,
+                datasets: [
+                    {
+                        label: "Atmospheric Carbon (ppm)",
+                        data: carbonData,
+                        borderColor: "red",
+                        borderWidth: 2,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: { display: true, text: "Years" }
+                    },
+                    y: {
+                        title: { display: true, text: "Carbon Level (ppm)" },
+                        beginAtZero: false
+                    }
+                }
+            }
+        });
+
+        document.querySelectorAll('input').forEach(input => input.addEventListener('input', updateSimulation));
+
+        let carbonParticles = [];
         //Updating Simulations
         function updateSimulation() {
-            let temp = document.getElementById('temp').value;
-            let mangrove = document.getElementById('mangrove').value;
-            let vehicles = document.getElementById('vehicles').value;
-            let houses = document.getElementById('houses').value;
-            let buildings = document.getElementById('buildings').value;
-            let population = document.getElementById('population').value;
-
-            let carbonLevel = 100 - mangrove * 0.5 + vehicles * 0.3 + buildings * 0.4 + houses * 0.2 + population * 0.2 + (temp - 25) * 0.5;
-            carbonData.push(carbonLevel);
-            carbonData.shift();
-            carbonChart.update();
-
             simCtx.clearRect(0, 0, simCanvas.width, simCanvas.height);
             
+            let temp = parseFloat(document.getElementById('temp').value) || 0;
+            let mangrove = parseFloat(document.getElementById('mangrove').value) || 0;
+            let vehicles = parseFloat(document.getElementById('vehicles').value) || 0;
+            let houses = parseFloat(document.getElementById('houses').value) || 0;
+            let buildings = parseFloat(document.getElementById('buildings').value) || 0;
+            let population = parseFloat(document.getElementById('population').value) || 0;
+            
+            // Update the global sea temperature variable
+            seaTemp = temp;
             drawSea();
             drawRoad();
 
-            //draw car
-            let carCount = Math.floor(vehicles / 10); // Adjust density
-            if (carPositions.length !== carCount) {
-                generateCarPositions(carCount); // Only update when needed
+            // Generate Carbon Emissions
+            generateCarbonParticles(vehicles, houses, buildings, population, temp);
+            
+            // **Mangroves Reduce Carbon**
+            absorbCarbonWithMangroves();
+            // drawAbsorptionEffect(); // Show the fun green bubbles!
+
+             // Start Carbon Level
+            let initialCarbon = 300;  
+            carbonData[0] = initialCarbon;
+            
+             // Simulate Carbon Change Over 6 Years (Bigger effect for kids to see)
+            for (let i = 1; i < carbonData.length; i++) {
+                let previousCarbon = carbonData[i - 1];
+
+                // Carbon increase from human activity
+                let emissionIncrease = (vehicles * 3) + (buildings * 4) + (houses * 2) + (population * 2) + ((temp - 20) * 5);
+
+                // Carbon absorption from mangroves
+                let absorption = mangrove * 5; // Bigger impact to make it noticeable for kids
+
+                // New carbon level (simplified)
+                carbonData[i] = previousCarbon + emissionIncrease - absorption;
+
+                // Keep carbon within a kid-friendly range
+                if (carbonData[i] < 100) {
+                    carbonData[i] = 100; // Minimum safe level
+                }
+                if (carbonData[i] > 600) {
+                    carbonData[i] = 600; // Maximum danger level
+                }
             }
-            carPositions.forEach(car => drawCar(simCtx, car.x, car.y, car.color));
+
+            // **Color the graph based on danger level**
+            let graphColor = "green"; // Default = good
+            if (carbonData[5] > 400) graphColor = "red"; // Bad carbon level
+            else if (carbonData[5] > 300) graphColor = "orange"; // Medium
+
+            // Update Graph Colors
+            carbonChart.data.datasets[0].data = carbonData;
+            carbonChart.data.datasets[0].borderColor = graphColor;
+            carbonChart.update();
 
             // draw building
             initializeBuilding(buildings);
@@ -118,14 +183,278 @@
             initializePeople(population);
             drawPeople(simCtx);
 
-            //draw carbon dioxide
+            // Draw mangroves
+            initializeMangroves(mangrove);
+            drawMangroves(simCtx);
 
+            //draw car
+            makeCar(vehicles);
+
+            // Draw carbon emissions
+            drawCarbonParticles();
         }
+
+        function absorbCarbonWithMangroves() {
+    let absorptionRadius = 50; // Radius around mangroves that absorbs carbon
+
+    // **Draw Green Glow to Show Absorption Area**
+    mangrovePositions.forEach(mangrove => {
+        simCtx.fillStyle = "rgba(0, 255, 0, 0.3)";
+        simCtx.beginPath();
+        simCtx.arc(mangrove.x, mangrove.y, absorptionRadius, 0, Math.PI * 2);
+        simCtx.fill();
+    });
+
+    // **Filter Carbon Particles That Are Outside the Absorption Area**
+    carbonParticles = carbonParticles.filter(particle => {
+        let absorbed = mangrovePositions.some(mangrove => {
+            let dx = particle.x - mangrove.x;
+            let dy = particle.y - mangrove.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+            return distance < absorptionRadius; // If inside radius, mark for removal
+        });
+
+        return !absorbed; // Keep only particles NOT absorbed
+    });
+
+    console.log("Carbon Particles After Absorption:", carbonParticles.length); // Debugging
+}
+
+        function absorbCarbonWithMangroves() {
+            let baseAbsorption = 2; // Each mangrove absorbs 2 particles per second (kid-friendly speed)
+            let totalAbsorption = mangrovePositions.length * baseAbsorption;
+
+            // **Show a Green Glow Around Mangroves**
+            mangrovePositions.forEach(mangrove => {
+                simCtx.fillStyle = "rgba(0, 255, 0, 0.3)";
+                simCtx.beginPath();
+                simCtx.arc(mangrove.x, mangrove.y, 50, 0, Math.PI * 2);
+                simCtx.fill();
+            });
+
+            // **Gradual Absorption - Only Absorb Some Carbon Each Frame**
+            let maxAbsorption = Math.min(totalAbsorption, carbonParticles.length * 0.15); // Up to 15% per frame
+            carbonParticles = carbonParticles.slice(maxAbsorption); // Remove absorbed particles
+
+            // **Add a Fun "Bubble Effect" When Carbon is Absorbed**
+            for (let i = 0; i < maxAbsorption; i++) {
+                let x = Math.random() * simCanvas.width; 
+                let y = Math.random() * simCanvas.height;
+                absorptionBubbles.push({ x, y, size: Math.random() * 5 + 3, opacity: 1 });
+            }
+
+            console.log(`Carbon Particles Left: ${carbonParticles.length}`);
+        }
+
+        let absorptionBubbles = []; // Stores "bubbles" from absorbed carbon
+
+        function drawAbsorptionEffect() {
+            simCtx.fillStyle = "rgba(0, 255, 0, 0.5)"; // Green bubbles
+
+            absorptionBubbles.forEach((bubble, index) => {
+                simCtx.globalAlpha = bubble.opacity;
+                simCtx.beginPath();
+                simCtx.arc(bubble.x, bubble.y, bubble.size, 0, Math.PI * 2);
+                simCtx.fill();
+                bubble.y -= 0.5; // Move bubbles up
+                bubble.opacity -= 0.01; // Slowly fade out
+
+                if (bubble.opacity <= 0) {
+                    absorptionBubbles.splice(index, 1); // Remove when fully faded
+                }
+            });
+
+            simCtx.globalAlpha = 1; // Reset opacity for other drawings
+        }
+
+        function generateCarbonParticles(vehicles, houses, buildings, population, temp) {
+            let mangroveFactor = Math.max(1 - mangrovePositions.length / 100, 0.1); // Reduce emissions if mangroves exist
+
+            let emissionLevels = {
+                vehicles: Math.ceil(3 * mangroveFactor),  // Reduce based on mangroves
+                houses: Math.ceil(1 * mangroveFactor),
+                buildings: Math.ceil(2 * mangroveFactor),
+                population: Math.ceil(1 * mangroveFactor),
+                seaTemp: Math.ceil((temp - 20) * 1.5 * mangroveFactor)
+            };
+
+            // **Generate Carbon Emissions with Reduced Effect**
+            carPositions.forEach(car => {
+                for (let i = 0; i < emissionLevels.vehicles; i++) {
+                    carbonParticles.push(createCarbonParticle(car.x + 10, car.y));
+                }
+            });
+
+            buildingPositions.forEach(building => {
+                for (let i = 0; i < emissionLevels.buildings; i++) {
+                    carbonParticles.push(createCarbonParticle(building.x + 20, building.y));
+                }
+            });
+
+            housePositions.forEach(house => {
+                for (let i = 0; i < emissionLevels.houses; i++) {
+                    carbonParticles.push(createCarbonParticle(house.x + 15, house.y));
+                }
+            });
+
+            peoplePositions.forEach(person => {
+                for (let i = 0; i < emissionLevels.population; i++) {
+                    carbonParticles.push(createCarbonParticle(person.x, person.y));
+                }
+            });
+
+            if (temp > 22) {
+                for (let i = 0; i < emissionLevels.seaTemp; i++) {
+                    carbonParticles.push(createCarbonParticle(
+                        Math.random() * (simCanvas.width * 0.35), 
+                        simCanvas.height - 5
+                    ));
+                }
+            }
+        }
+
+        function createCarbonParticle(x, y) {
+            return {
+                x: x,
+                y: y,
+                size: Math.random() * 4 + 2, // Random size between 2-6 pixels
+                speed: Math.random() * 0.5 + 0.3, // Slower, smooth floating
+                opacity: 1, // Start fully visible
+                drift: Math.random() * 2 - 1, // Slight left-right movement
+                curve: Math.random() * 0.05 // Creates a gentle wave effect
+            };
+        }
+
+
+        function drawCarbonParticles() {
+            if (!carbonParticles || carbonParticles.length === 0) return;
+
+            simCtx.fillStyle = "rgba(50, 50, 50, 0.8)"; // Dark gray for carbon particles
+
+            carbonParticles.forEach((particle, index) => {
+                simCtx.globalAlpha = particle.opacity; // Smooth fade-out effect
+
+                // **Draw carbon particle**
+                simCtx.beginPath();
+                simCtx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                simCtx.fill();
+
+                // **Smooth floating animation**
+                particle.y -= particle.speed; // Move up slowly
+                particle.x += Math.sin(particle.y * particle.curve) * 0.5; // Gentle drifting
+                particle.opacity -= 0.005; // Slow fade-out
+
+                // **Remove fully faded particles**
+                if (particle.opacity <= 0) {
+                    carbonParticles.splice(index, 1);
+                }
+            });
+
+            simCtx.globalAlpha = 1; // Reset opacity for other drawings
+}
+
+
+        //draw mangroves
+        let mangrovePositions = [];
+        let waveOffsetMangrove = 0; // To animate the movement
+
+        // Initialize Mangroves
+        function initializeMangroves(mangrove) {
+            let count = Math.floor(mangrove / 1); // Adjust density
+            if (mangrovePositions.length !== count) {
+                generateMangrovePositions(count);
+            }
+        }
+        
+        function drawMangroves(ctx) {
+            mangrovePositions.forEach(mangrove => {
+                drawMangroveTree(ctx, mangrove.x, mangrove.y);
+            });
+        }
+
+        // Generate random positions for mangroves in the sea only
+        function generateMangrovePositions(count) {
+            mangrovePositions = []; // Reset the list
+            let seaX = 120; // Start at leftmost part of the sea
+            let seaWidth = simCanvas.width * 0.25; // Mangroves can only be in 40% of canvas
+            let mangroveSize = 20; // Size of each mangrove
+            let buffer = 0; // Prevent overlap
+            let maxAttempts = 100; // Avoid infinite loops
+
+            for (let i = 0; i < count; i++) {
+                let attempts = 0;
+                let newMangrove;
+                let collision;
+
+                do {
+                    let mangroveX = seaX + Math.random() * (seaWidth - mangroveSize);
+                    let mangroveY = Math.random() * (simCanvas.height - mangroveSize);
+
+                    newMangrove = { x: mangroveX, y: mangroveY };
+
+                    // Check for collision with other mangroves
+                    collision = mangrovePositions.some(mangrove => 
+                        checkCollision(mangrove, newMangrove, mangroveSize, mangroveSize, buffer)
+                    );
+
+                    attempts++;
+                } while (collision && attempts < maxAttempts);
+
+                if (!collision) {
+                    mangrovePositions.push(newMangrove);
+                }
+            }
+        }
+
+
+        // Draw a **realistic mangrove tree**
+        function drawMangroveTree(ctx, x, y) {
+            let treeHeight = 40;
+            let trunkWidth = 5;
+            let canopyRadius = 18;
+
+            // Animate sway effect
+            let sway = Math.sin(waveOffsetMangrove * 0.1) * 3; // Slight movement effect
+
+            // **Draw roots**
+            ctx.strokeStyle = "brown";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x, y + treeHeight); // Base of trunk
+            ctx.lineTo(x - 5, y + treeHeight + 10 + sway);
+            ctx.moveTo(x, y + treeHeight);
+            ctx.lineTo(x + 5, y + treeHeight + 12 - sway);
+            ctx.stroke();
+
+            // **Draw trunk**
+            ctx.fillStyle = "brown";
+            ctx.fillRect(x - trunkWidth / 2, y, trunkWidth, treeHeight);
+
+            // **Draw canopy (green swaying leaves)**
+            ctx.fillStyle = "#2E8B57"; // Dark green
+            ctx.beginPath();
+            ctx.arc(x + sway, y - 10, canopyRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "#4CAF50"; // Lighter green for depth
+            ctx.beginPath();
+            ctx.arc(x - 5 + sway, y - 12, canopyRadius * 0.8, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // **Animate Mangroves**
+        function animateMangroves() {
+            waveOffsetMangrove += 1; // Move the wave effect
+            requestAnimationFrame(animateMangroves); // Loop animation
+        }
+
+        // Start animation loop for mangroves
+        animateMangroves();
 
         //draw building
         let buildingPositions = [];
         function initializeBuilding(buildings) {
-            let count = Math.floor(buildings / 10);
+            let count = Math.floor(buildings / 2);
             if (buildingPositions.length !== count) {
                 generateBuildingPositions(count);
             }
@@ -296,7 +625,7 @@
         let housePositions = [];
         // Initialize houses
         function initializeHouses(houses) {
-            let count = Math.floor(houses / 10); // Adjust density
+            let count = Math.floor(houses / 2); // Adjust density
             if (housePositions.length !== count) {
                 generateHousePositions(count);
             }
@@ -355,7 +684,7 @@
         // draw People
         // Call this once when population changes, NOT in updateSimulation
         function initializePeople(population) {
-            let count = Math.floor(population / 5);
+            let count = Math.floor(population / 2);
             if (peoplePositions.length !== count) {
                 generatePeoplePositions(count);
             }
@@ -506,7 +835,16 @@
             simCtx.fillRect(landX, 0, simCanvas.width - landX, simCanvas.height);
         }
 
-        //car drawing
+        //draw car
+        function makeCar(vehicles){
+            //draw car and initialization of car/vehicle only
+            let carCount = Math.floor(vehicles / 2); // Adjust density
+            if (carPositions.length !== carCount) {
+                generateCarPositions(carCount); // Only update when needed
+            }
+            carPositions.forEach(car => drawCar(simCtx, car.x, car.y, car.color));
+        }
+
         function drawCar(ctx, x, y, color) { 
             let carWidth = 20;  // Smaller width
             let carHeight = 35; // Smaller height
@@ -586,12 +924,20 @@
         //sea drawing
         let waveOffset = 0;
         let smallWaves = [];
+        let heatBubbles = [];
 
         function drawSea() {
-            simCtx.fillStyle = '#a3d5ff'; // Base sea color
+            // **Get current sea temperature from the slider**
+            seaTemp = parseFloat(document.getElementById('temp').value) || 20;
+
+            // **Adjust sea color dynamically**
+            let blueTone = Math.max(150, 213 - (seaTemp - 20) * 10); // Cooler sea = lighter, hotter = darker
+            let seaColor = `rgb(${Math.min(163 + (seaTemp - 20) * 5, 255)}, ${blueTone}, 255)`;
+            simCtx.fillStyle = seaColor;
             simCtx.fillRect(0, 0, simCanvas.width * 0.4, simCanvas.height);
 
-            let amplitude = 20;
+            // **Wave Motion Settings**
+            let amplitude = 15 + (seaTemp - 20) * 3; // Higher temp = stronger waves
             let frequency = 0.02;
             let numWaves = 5;
 
@@ -607,18 +953,6 @@
                 }
                 simCtx.lineTo(0, simCanvas.height);
             }
-            simCtx.closePath();
-            simCtx.fill();
-
-            // **Shoreline Effect**
-            simCtx.fillStyle = '#c2a772'; // Sand color
-            simCtx.beginPath();
-            for (let y = 0; y <= simCanvas.height; y += 10) {
-                let shorelineX = simCanvas.width * 0.26 + Math.sin((y + waveOffset) * 0.02) * 8 + 100;
-                simCtx.lineTo(shorelineX, y);
-            }
-            simCtx.lineTo(simCanvas.width * 15, simCanvas.height);
-            simCtx.lineTo(simCanvas.width * 0.4, 0);
             simCtx.closePath();
             simCtx.fill();
 
@@ -647,7 +981,50 @@
                 });
             }
 
+            // **Heat Bubble Effect for Warmer Oceans**
+            if (seaTemp > 22) {
+                simCtx.fillStyle = `rgba(255, 69, 0, ${(seaTemp - 22) * 0.1})`; // Orange bubbles for heat
+                heatBubbles.forEach((bubble, index) => {
+                    simCtx.beginPath();
+                    simCtx.arc(bubble.x, bubble.y, bubble.size, 0, Math.PI * 2);
+                    simCtx.fill();
+                    bubble.y -= bubble.speed; // Move bubbles up
+
+                    if (bubble.y < 0) {
+                        heatBubbles.splice(index, 1); // Remove bubbles above surface
+                    }
+                });
+
+                // Generate bubbles more frequently when temperature is high
+                if (Math.random() < (seaTemp - 22) * 0.02) {
+                    heatBubbles.push({
+                        x: Math.random() * (simCanvas.width * 0.4),
+                        y: simCanvas.height - 10,
+                        size: Math.random() * 4 + 2,
+                        speed: Math.random() * 0.5 + 0.2
+                    });
+                }
+            }
+
             waveOffset += 1; // Animate waves
+
+            // **Draw Shoreline LAST so it's always on top**
+            drawShoreline();
+        }
+
+        function drawShoreline() {
+            // **Fixed Shoreline Color (Does NOT change with temperature)**
+            simCtx.fillStyle = '#c2a772'; // Permanent sand color
+
+            simCtx.beginPath();
+            for (let y = 0; y <= simCanvas.height; y += 10) {
+                let shorelineX = simCanvas.width * 0.26 + Math.sin((y + waveOffset) * 0.02) * 8 + 100;
+                simCtx.lineTo(shorelineX, y);
+            }
+            simCtx.lineTo(simCanvas.width * 15, simCanvas.height);
+            simCtx.lineTo(simCanvas.width * 0.4, 0);
+            simCtx.closePath();
+            simCtx.fill();
         }
 
         function animate() {
@@ -658,9 +1035,6 @@
 
         // Start animation loop for sea waves
         animate();
-
-        document.querySelectorAll('input').forEach(input => input.addEventListener('input', updateSimulation));
-        updateSimulation();
 
         //Drawing Legend
         function drawLegendCar() {
@@ -705,6 +1079,7 @@
             ctx.fillRect(16, 23, 2, 5);
         }
 
+        updateSimulation();
     </script>
 </body>
 </html>
