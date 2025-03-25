@@ -7,15 +7,97 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { display: flex; flex-direction: column; align-items: center; font-family: Arial, sans-serif; background-color: #e0f7fa; }
-        .container { display: flex;  align-items: flex-start;}
+        body {display: flex; flex-direction: column; align-items: center; font-family: Arial, sans-serif; background-color: #e0f7fa; }
+        .container {
+            display: flex;
+            align-items: flex-start;
+            width: 1500px; /* Set the desired width */
+            max-width: 100%; /* Prevent overflow */
+            /* border: 1px solid red; (Optional) Add a border to see the effect */
+            justify-content: space-between;
+        }
         .controls, canvas { margin-left: 10px; }
         .legend { display: flex; gap: 5px; margin-bottom: 10px; }
-        .legend div { display: flex; align-items: center; gap: 5px; font-size: 16px; }
+        .legend div { display: flex; align-items: center; gap: 2px; font-size: 16px; }
         .legend i { font-size: 20px; }
-        .control-group { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
-        .graph-container {width: 30%; padding-right: 10px;}
-        #carbonGraph {border: 1px solid black;background-color: white;}
+        .control-group { display: flex; align-items: center; gap: 1px; margin-bottom: 1px; }
+        .graph-container {width: 100%;} 
+        #carbonGraph {border: 1px solid black;background-color: white; margin-top: 2rem;}
+        .temp-control {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+            margin-left: 100px;
+            width: 80%;
+        }
+
+        .temp-slider-container {
+            position: relative;
+            width: 300px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Temperature gradient background */
+        .temp-gradient {
+            position: absolute;
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            background: linear-gradient(to right, blue, lightblue, yellow, orange, red);
+        }
+
+        /* Temperature slider */
+        #temp {
+            position: relative;
+            width: 100%;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        /* Customize the slider thumb */
+        #temp::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background-color: red;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s ease-in-out;
+        }
+
+        #temp::-webkit-slider-thumb:hover {
+            transform: scale(1.3);
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 350px; /* Adjust this width as needed */
+        }
+
+        .control-group label {
+            flex: none; /* Prevents label from resizing */
+            width: 120px; /* Adjust as needed */
+            text-align: right;
+            padding-right: 10px;
+            white-space: nowrap; /* Prevents wrapping */
+        }
+
+        .control-group input {
+            flex: 2; /* Ensures sliders take up more space */
+        }
     </style>
 </head>
 <body>
@@ -34,40 +116,50 @@
     </div>    
     <div class="container">
         <!-- Left side: Carbon Graph -->
-        <div class="graph-container">
-            <canvas id="carbonGraph" width="400" height="300"></canvas>
-        </div>
+        <div class="left-part">
+            <div class="controls">
+                <div class="control-group">
+                    <label>Mangroves: <span id="mangrovesValue"></span></label>
+                    <input type="range" id="mangrove" min="0" max="100" value="0" oninput="updateSimulation()">
+                </div>
+                <div class="control-group">
+                    <label>Vehicles: <span id="vehiclesValue"></span></label>
+                    <input type="range" id="vehicles" min="0" max="10" value="0" oninput="updateSimulation()">
+                </div>
+                <div class="control-group">
+                    <label>Houses: <span id="housesValue"></span></label>
+                    <input type="range" id="houses" min="0" max="10" value="0" oninput="updateSimulation()">
+                </div>
+                <div class="control-group">
+                    <label>Buildings: <span id="buildingsValue"></span></label>
+                    <input type="range" id="buildings" min="0" max="10" value="0" oninput="updateSimulation()">
+                </div>
+                <div class="control-group">
+                    <label>Population: <span id="peopleValue"></span></label>
+                    <input type="range" id="population" min="0" max="10" value="0" oninput="updateSimulation()">
+                </div>
+            </div>
 
-        <div class="controls">
-            <div class="control-group">
-                <label>Mangroves: <span id="mangrovesValue">0</span></label>
-                <input type="range" id="mangrove" min="0" max="100" value="0" oninput="updateSimulation()">
-            </div>
-            <div class="control-group">
-                <label>Sea Temperature: <span id="seaTempValue">0</span>°C</label>
-                <input type="range" id="temp" min="20" max="25" value="0" oninput="updateSimulation()">
-            </div>
-            <div class="control-group">
-                <label>Vehicles: <span id="vehiclesValue">0</span></label>
-                <input type="range" id="vehicles" min="0" max="25" value="0" oninput="updateSimulation()">
-            </div>
-            <div class="control-group">
-                <label>Houses: <span id="housesValue">0</span></label>
-                <input type="range" id="houses" min="0" max="25" value="0" oninput="updateSimulation()">
-            </div>
-            <div class="control-group">
-                <label>Buildings: <span id="buildingsValue">0</span></label>
-                <input type="range" id="buildings" min="0" max="25" value="0" oninput="updateSimulation()">
-            </div>
-            <div class="control-group">
-                <label>Population: <span id="peopleValue">0</span></label>
-                <input type="range" id="population" min="0" max="25" value="0" oninput="updateSimulation()">
+            <div class="graph-container">
+                <canvas id="carbonGraph" width="520" height="352"></canvas>
             </div>
         </div>
-        <canvas id="simulationCanvas" width="1200" height="650" style="border: 1px solid black;"></canvas>
+        
+        <div class="right-part">
+            <canvas id="simulationCanvas" width="950" height="500" style="border: 1px solid black;"></canvas>   
+            
+            <!-- New Temperature Control (Now Below the Canvas) -->
+            <div class="temp-control">
+                <label>Sea Temperature: <span id="seaTempValue">25</span>°C</label>
+                <div class="temp-slider-container">
+                    <input type="range" id="temp" min="20" max="35" value="25" oninput="updateTemperature()">
+                    <div class="temp-gradient"></div>
+                </div>
+            </div>
+        </div>
+        
         
     </div>
-    <!-- <canvas id="carbonGraph" width="600" height="300"></canvas> -->
     
     <script>
 
@@ -110,6 +202,15 @@
 
         document.querySelectorAll('input').forEach(input => input.addEventListener('input', updateSimulation));
 
+        function toggleCarbon() {
+            carbonVisible = !carbonVisible;
+
+            let button = document.getElementById("toggleCarbon");
+            button.textContent = carbonVisible ? "Hide Carbon" : "Show Carbon";
+
+            updateSimulation(); // Redraw without carbon if turned off
+        }
+        
         let carbonParticles = [];
         //Updating Simulations
         function updateSimulation() {
@@ -126,13 +227,11 @@
             seaTemp = temp;
             drawSea();
             drawRoad();
-
-            // Generate Carbon Emissions
-            generateCarbonParticles(vehicles, houses, buildings, population, temp);
             
-            // **Mangroves Reduce Carbon**
+            drawCarbonParticles();
+            generateCarbonParticles(vehicles, houses, buildings, population, temp);
+            //  Mangroves Reduce Carbon 
             absorbCarbonWithMangroves();
-            // drawAbsorptionEffect(); // Show the fun green bubbles!
 
              // Start Carbon Level
             let initialCarbon = 300;  
@@ -160,7 +259,7 @@
                 }
             }
 
-            // **Color the graph based on danger level**
+            //  Color the graph based on danger level 
             let graphColor = "green"; // Default = good
             if (carbonData[5] > 400) graphColor = "red"; // Bad carbon level
             else if (carbonData[5] > 300) graphColor = "orange"; // Medium
@@ -189,42 +288,62 @@
 
             //draw car
             makeCar(vehicles);
+            
 
-            // Draw carbon emissions
-            drawCarbonParticles();
+            //  Update the values displayed next to the sliders 
+            document.getElementById('mangrovesValue').innerText = mangrove;
+            document.getElementById('vehiclesValue').innerText = vehicles;
+            document.getElementById('housesValue').innerText = houses;
+            document.getElementById('buildingsValue').innerText = buildings;
+            document.getElementById('peopleValue').innerText = population;
+        }
+
+        function updateTemperature() {
+            let temp = document.getElementById('temp').value;
+            document.getElementById('seaTempValue').innerText = temp;
+
+            // Change thumb color based on temperature
+            let color;
+            if (temp < 23) color = "blue";
+            else if (temp < 27) color = "lightblue";
+            else if (temp < 30) color = "yellow";
+            else if (temp < 33) color = "orange";
+            else color = "red";
+
+            document.documentElement.style.setProperty("--slider-thumb-color", color);
         }
 
         function absorbCarbonWithMangroves() {
-    let absorptionRadius = 50; // Radius around mangroves that absorbs carbon
+        let absorptionRadius = 1000; // Radius around mangroves that absorbs carbon
 
-    // **Draw Green Glow to Show Absorption Area**
-    mangrovePositions.forEach(mangrove => {
-        simCtx.fillStyle = "rgba(0, 255, 0, 0.3)";
-        simCtx.beginPath();
-        simCtx.arc(mangrove.x, mangrove.y, absorptionRadius, 0, Math.PI * 2);
-        simCtx.fill();
-    });
-
-    // **Filter Carbon Particles That Are Outside the Absorption Area**
-    carbonParticles = carbonParticles.filter(particle => {
-        let absorbed = mangrovePositions.some(mangrove => {
-            let dx = particle.x - mangrove.x;
-            let dy = particle.y - mangrove.y;
-            let distance = Math.sqrt(dx * dx + dy * dy);
-            return distance < absorptionRadius; // If inside radius, mark for removal
+        //  Draw Green Glow to Show Absorption Area 
+        mangrovePositions.forEach(mangrove => {
+            simCtx.fillStyle = "rgba(0, 255, 0, 5)";
+            simCtx.beginPath();
+            simCtx.arc(mangrove.x, mangrove.y, absorptionRadius, 0, Math.PI * 2);
+            simCtx.fill();
         });
 
-        return !absorbed; // Keep only particles NOT absorbed
-    });
+        //  Filter Carbon Particles That Are Outside the Absorption Area 
+        carbonParticles = carbonParticles.filter(particle => {
+            let absorbed = mangrovePositions.some(mangrove => {
+                let dx = particle.x - mangrove.x;
+                let dy = particle.y - mangrove.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                return distance < absorptionRadius; // If inside radius, mark for removal
+            });
 
-    console.log("Carbon Particles After Absorption:", carbonParticles.length); // Debugging
-}
+            return !absorbed; // Keep only particles NOT absorbed
+        });
+
+            console.log("Carbon Particles After Absorption:", carbonParticles.length); // Debugging
+        }
 
         function absorbCarbonWithMangroves() {
             let baseAbsorption = 2; // Each mangrove absorbs 2 particles per second (kid-friendly speed)
             let totalAbsorption = mangrovePositions.length * baseAbsorption;
 
-            // **Show a Green Glow Around Mangroves**
+            //  Show a Green Glow Around Mangroves 
             mangrovePositions.forEach(mangrove => {
                 simCtx.fillStyle = "rgba(0, 255, 0, 0.3)";
                 simCtx.beginPath();
@@ -232,11 +351,11 @@
                 simCtx.fill();
             });
 
-            // **Gradual Absorption - Only Absorb Some Carbon Each Frame**
+            //  Gradual Absorption - Only Absorb Some Carbon Each Frame 
             let maxAbsorption = Math.min(totalAbsorption, carbonParticles.length * 0.15); // Up to 15% per frame
             carbonParticles = carbonParticles.slice(maxAbsorption); // Remove absorbed particles
 
-            // **Add a Fun "Bubble Effect" When Carbon is Absorbed**
+            //  Add a Fun "Bubble Effect" When Carbon is Absorbed 
             for (let i = 0; i < maxAbsorption; i++) {
                 let x = Math.random() * simCanvas.width; 
                 let y = Math.random() * simCanvas.height;
@@ -248,69 +367,63 @@
 
         let absorptionBubbles = []; // Stores "bubbles" from absorbed carbon
 
-        function drawAbsorptionEffect() {
-            simCtx.fillStyle = "rgba(0, 255, 0, 0.5)"; // Green bubbles
-
-            absorptionBubbles.forEach((bubble, index) => {
-                simCtx.globalAlpha = bubble.opacity;
-                simCtx.beginPath();
-                simCtx.arc(bubble.x, bubble.y, bubble.size, 0, Math.PI * 2);
-                simCtx.fill();
-                bubble.y -= 0.5; // Move bubbles up
-                bubble.opacity -= 0.01; // Slowly fade out
-
-                if (bubble.opacity <= 0) {
-                    absorptionBubbles.splice(index, 1); // Remove when fully faded
-                }
-            });
-
-            simCtx.globalAlpha = 1; // Reset opacity for other drawings
-        }
-
         function generateCarbonParticles(vehicles, houses, buildings, population, temp) {
             let mangroveFactor = Math.max(1 - mangrovePositions.length / 100, 0.1); // Reduce emissions if mangroves exist
 
             let emissionLevels = {
-                vehicles: Math.ceil(3 * mangroveFactor),  // Reduce based on mangroves
-                houses: Math.ceil(1 * mangroveFactor),
-                buildings: Math.ceil(2 * mangroveFactor),
-                population: Math.ceil(1 * mangroveFactor),
-                seaTemp: Math.ceil((temp - 20) * 1.5 * mangroveFactor)
+                vehicles: Math.ceil(1.5 * mangroveFactor),   // Vehicles contribute around 25-30%
+                houses: Math.ceil(1 * mangroveFactor),     // Houses contribute ~15-20%
+                buildings: Math.ceil(4 * mangroveFactor),    // Buildings contribute the most (~40%)
+                population: Math.ceil(0.5 * mangroveFactor), // Lower, since individuals emit less
+                seaTemp: Math.ceil((temp - 20) * 2 * mangroveFactor) // Increased for greater effect
             };
 
-            // **Generate Carbon Emissions with Reduced Effect**
+            //  Generate Carbon Emissions with Reduced Effect 
             carPositions.forEach(car => {
                 for (let i = 0; i < emissionLevels.vehicles; i++) {
-                    carbonParticles.push(createCarbonParticle(car.x + 10, car.y));
+                    if (Math.random() < 0.3) { // 50% chance per vehicle to emit
+                        carbonParticles.push(createCarbonParticle(car.x + 10, car.y));
+                    }
                 }
             });
 
             buildingPositions.forEach(building => {
                 for (let i = 0; i < emissionLevels.buildings; i++) {
-                    carbonParticles.push(createCarbonParticle(building.x + 20, building.y));
+                    if (Math.random() < 0.5) { // 30% chance per building to emit
+                        carbonParticles.push(createCarbonParticle(building.x + 20, building.y));
+                    }
                 }
             });
 
             housePositions.forEach(house => {
                 for (let i = 0; i < emissionLevels.houses; i++) {
-                    carbonParticles.push(createCarbonParticle(house.x + 15, house.y));
+                    if (Math.random() < 0.25) { // 20% chance per house to emit
+                        carbonParticles.push(createCarbonParticle(house.x + 15, house.y));
+                    }
                 }
             });
 
             peoplePositions.forEach(person => {
                 for (let i = 0; i < emissionLevels.population; i++) {
-                    carbonParticles.push(createCarbonParticle(person.x, person.y));
+                    if (Math.random() < 0.02) { // 2% chance per person to emit
+                        carbonParticles.push(createCarbonParticle(person.x, person.y));
+                    }
                 }
             });
 
             if (temp > 22) {
+                let fixedX = simCanvas.width * 0.001;  // Adjust this for column position
+
                 for (let i = 0; i < emissionLevels.seaTemp; i++) {
-                    carbonParticles.push(createCarbonParticle(
-                        Math.random() * (simCanvas.width * 0.35), 
-                        simCanvas.height - 5
-                    ));
+                    if (Math.random() < 0.2) { // 40% chance per sea temp level to emit
+                        carbonParticles.push(createCarbonParticle(
+                            fixedX,  // Keep x constant for vertical column
+                            simCanvas.height - (Math.random() * 500)  // Vary y for vertical spread
+                        ));
+                    }
                 }
             }
+
         }
 
         function createCarbonParticle(x, y) {
@@ -329,22 +442,22 @@
         function drawCarbonParticles() {
             if (!carbonParticles || carbonParticles.length === 0) return;
 
-            simCtx.fillStyle = "rgba(50, 50, 50, 0.8)"; // Dark gray for carbon particles
+            simCtx.fillStyle = "rgba(50, 50, 50, 1)"; // Dark gray for carbon particles
 
             carbonParticles.forEach((particle, index) => {
                 simCtx.globalAlpha = particle.opacity; // Smooth fade-out effect
 
-                // **Draw carbon particle**
+                //  Draw carbon particle 
                 simCtx.beginPath();
                 simCtx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
                 simCtx.fill();
 
-                // **Smooth floating animation**
+                //  Smooth floating animation 
                 particle.y -= particle.speed; // Move up slowly
                 particle.x += Math.sin(particle.y * particle.curve) * 0.5; // Gentle drifting
                 particle.opacity -= 0.005; // Slow fade-out
 
-                // **Remove fully faded particles**
+                //  Remove fully faded particles 
                 if (particle.opacity <= 0) {
                     carbonParticles.splice(index, 1);
                 }
@@ -407,23 +520,23 @@
         }
 
 
-        // Draw a **realistic mangrove tree**
+        // Draw a mangrove tree
         function drawMangroveTree(ctx, x, y) {
-            let treeHeight = 40;
-            let trunkWidth = 5;
-            let canopyRadius = 18;
+            let treeHeight = 25;  // Reduced height
+            let trunkWidth = 3;   // Thinner trunk
+            let canopyRadius = 10; // Smaller canopy
 
             // Animate sway effect
-            let sway = Math.sin(waveOffsetMangrove * 0.1) * 3; // Slight movement effect
+            let sway = Math.sin(waveOffsetMangrove * 0.1) * 2; // Slight movement effect
 
             // **Draw roots**
             ctx.strokeStyle = "brown";
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 1.5;
             ctx.beginPath();
             ctx.moveTo(x, y + treeHeight); // Base of trunk
-            ctx.lineTo(x - 5, y + treeHeight + 10 + sway);
+            ctx.lineTo(x - 3, y + treeHeight + 5 + sway);
             ctx.moveTo(x, y + treeHeight);
-            ctx.lineTo(x + 5, y + treeHeight + 12 - sway);
+            ctx.lineTo(x + 3, y + treeHeight + 6 - sway);
             ctx.stroke();
 
             // **Draw trunk**
@@ -433,16 +546,16 @@
             // **Draw canopy (green swaying leaves)**
             ctx.fillStyle = "#2E8B57"; // Dark green
             ctx.beginPath();
-            ctx.arc(x + sway, y - 10, canopyRadius, 0, Math.PI * 2);
+            ctx.arc(x + sway, y - 6, canopyRadius, 0, Math.PI * 2);
             ctx.fill();
 
             ctx.fillStyle = "#4CAF50"; // Lighter green for depth
             ctx.beginPath();
-            ctx.arc(x - 5 + sway, y - 12, canopyRadius * 0.8, 0, Math.PI * 2);
+            ctx.arc(x - 3 + sway, y - 8, canopyRadius * 0.8, 0, Math.PI * 2);
             ctx.fill();
         }
 
-        // **Animate Mangroves**
+        //  Animate Mangroves 
         function animateMangroves() {
             waveOffsetMangrove += 1; // Move the wave effect
             requestAnimationFrame(animateMangroves); // Loop animation
@@ -454,7 +567,7 @@
         //draw building
         let buildingPositions = [];
         function initializeBuilding(buildings) {
-            let count = Math.floor(buildings / 2);
+            let count = Math.floor(buildings / 1);
             if (buildingPositions.length !== count) {
                 generateBuildingPositions(count);
             }
@@ -462,39 +575,39 @@
 
         function drawBuilding(ctx) {
             buildingPositions.forEach(building => {
-                let buildingWidth = 40; // Smaller width
-                let buildingHeight = 120; // Smaller height
+                let buildingWidth = 25; // Reduced width
+                let buildingHeight = 80; // Reduced height
 
                 // Draw building body
                 ctx.fillStyle = "gray";
                 ctx.fillRect(building.x, building.y, buildingWidth, buildingHeight);
-                
+
                 // Draw building outline
                 ctx.strokeStyle = "black";
-                ctx.lineWidth = 3;
+                ctx.lineWidth = 2;
                 ctx.strokeRect(building.x, building.y, buildingWidth, buildingHeight);
 
                 // Draw windows
-                ctx.fillStyle = "lightblue"; // Window color
-                let windowWidth = 10, windowHeight = 10;
-                let gapX = 5, gapY = 15; // Spacing for windows
+                ctx.fillStyle = "lightblue"; 
+                let windowWidth = 6, windowHeight = 6;
+                let gapX = 4, gapY = 10; // Adjusted spacing
 
-                for (let row = 0; row < 3; row++) { // 3 rows of windows
+                for (let row = 0; row < 2; row++) { // 2 rows of windows
                     for (let col = 0; col < 2; col++) { // 2 columns of windows
-                        let windowX = building.x + gapX + col * (windowWidth + 10);
-                        let windowY = building.y + gapY + row * (windowHeight + 15);
+                        let windowX = building.x + gapX + col * (windowWidth + 6);
+                        let windowY = building.y + gapY + row * (windowHeight + 10);
                         ctx.fillRect(windowX, windowY, windowWidth, windowHeight);
-                        ctx.strokeRect(windowX, windowY, windowWidth, windowHeight); // Outline for window
+                        ctx.strokeRect(windowX, windowY, windowWidth, windowHeight);
                     }
                 }
 
                 // Draw door
                 ctx.fillStyle = "brown";
-                let doorWidth = 15, doorHeight = 25;
+                let doorWidth = 10, doorHeight = 15;
                 let doorX = building.x + (buildingWidth - doorWidth) / 2; // Center door
                 let doorY = building.y + buildingHeight - doorHeight;
                 ctx.fillRect(doorX, doorY, doorWidth, doorHeight);
-                ctx.strokeRect(doorX, doorY, doorWidth, doorHeight); // Outline for door
+                ctx.strokeRect(doorX, doorY, doorWidth, doorHeight);
             });
         }
 
@@ -502,9 +615,9 @@
             buildingPositions = []; // Reset list
             let landX = (simCanvas.width - 200) / 2 + 200; // Land starts here
             let landWidth = simCanvas.width - landX;
-            let buildingWidth = 40;  
-            let buildingHeight = 120; 
-            let buffer = 20; // Avoid overlap
+            let buildingWidth = 25;  
+            let buildingHeight = 80; 
+            let buffer = 5; // Avoid overlap
             let maxAttempts = 100;
 
             let landY = 50; // Ensure buildings start higher up
@@ -560,13 +673,12 @@
             );
         }
 
-        // Draw houses
         function drawHouses(ctx) {
             housePositions.forEach(house => {
-                let houseWidth = 40;
-                let houseHeight = 30;
-                let roofHeight = 20;
-                let brickSize = 6;
+                let houseWidth = 30;  // Increased width slightly
+                let houseHeight = 24; // Slightly increased height
+                let roofHeight = 14;  // Taller roof
+                let brickSize = 4;    // Adjusted brick size for visibility
 
                 // House Body (Brick Wall)
                 ctx.fillStyle = "#FF9800";
@@ -574,17 +686,17 @@
 
                 // Draw bricks
                 ctx.strokeStyle = "#D2691E";
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 1.2;
                 for (let y = house.y; y < house.y + houseHeight; y += brickSize) {
                     for (let x = house.x; x < house.x + houseWidth; x += brickSize) {
-                        let offset = (y % (brickSize * 2) === 0) ? 0 : brickSize / 2 - 4;
+                        let offset = (y % (brickSize * 2) === 0) ? 0 : brickSize / 2 - 1;
                         ctx.strokeRect(x + offset, y, brickSize, brickSize);
                     }
                 }
 
                 // Outline for the house
                 ctx.strokeStyle = "black";
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 1.2;
                 ctx.strokeRect(house.x, house.y, houseWidth, houseHeight);
 
                 // Roof
@@ -599,8 +711,8 @@
 
                 // Windows
                 ctx.fillStyle = "#ADD8E6"; // Light blue glass effect
-                let windowSize = 8;
-                let windowSpacing = 6;
+                let windowSize = 6;
+                let windowSpacing = 5;
                 ctx.fillRect(house.x + windowSpacing, house.y + 5, windowSize, windowSize);
                 ctx.fillRect(house.x + houseWidth - windowSpacing - windowSize, house.y + 5, windowSize, windowSize);
                 ctx.strokeRect(house.x + windowSpacing, house.y + 5, windowSize, windowSize);
@@ -608,7 +720,7 @@
 
                 // Door
                 ctx.fillStyle = "brown";
-                let doorWidth = 10, doorHeight = 15;
+                let doorWidth = 7, doorHeight = 12;
                 let doorX = house.x + (houseWidth - doorWidth) / 2;
                 let doorY = house.y + houseHeight - doorHeight;
                 ctx.fillRect(doorX, doorY, doorWidth, doorHeight);
@@ -621,11 +733,12 @@
                 ctx.fill();
             });
         }
-        
+
+
         let housePositions = [];
         // Initialize houses
         function initializeHouses(houses) {
-            let count = Math.floor(houses / 2); // Adjust density
+            let count = Math.floor(houses / 1); // Adjust density
             if (housePositions.length !== count) {
                 generateHousePositions(count);
             }
@@ -635,8 +748,8 @@
             housePositions = []; // Reset list
             let landX = (simCanvas.width - 200) / 2 + 150; // Land starts here
             let landWidth = simCanvas.width - landX;
-            let houseWidth = 40, houseHeight = 30;
-            let buffer = 20; // Avoid overlap
+            let houseWidth = 30, houseHeight = 25;
+            let buffer = 10// Avoid overlap
             let maxAttempts = 100;
 
             let landY = 50; // Start higher to cover more land
@@ -684,7 +797,7 @@
         // draw People
         // Call this once when population changes, NOT in updateSimulation
         function initializePeople(population) {
-            let count = Math.floor(population / 2);
+            let count = Math.floor(population / 1);
             if (peoplePositions.length !== count) {
                 generatePeoplePositions(count);
             }
@@ -692,22 +805,23 @@
 
         function drawPeople(ctx) {
             peoplePositions.forEach(person => {
-                // Draw Head (Circle)
+                // Draw Head (Smaller Circle)
                 ctx.fillStyle = person.headColor;
                 ctx.beginPath();
-                ctx.arc(person.x, person.y, 5, 0, Math.PI * 2);
+                ctx.arc(person.x, person.y, 3, 0, Math.PI * 2); // Reduced size
                 ctx.fill();
 
-                // Draw Body (Rectangle)
+                // Draw Body (Smaller Rectangle)
                 ctx.fillStyle = person.shirtColor;
-                ctx.fillRect(person.x - 5, person.y + 10, 10, 15);
+                ctx.fillRect(person.x - 3, person.y + 5, 6, 10); // Reduced width & height
 
-                // Draw Legs (Two small rectangles)
+                // Draw Legs (Smaller Rectangles)
                 ctx.fillStyle = person.pantsColor;
-                ctx.fillRect(person.x - 5, person.y + 25, 4, 10);
-                ctx.fillRect(person.x + 1, person.y + 25, 4, 10);
+                ctx.fillRect(person.x - 3, person.y + 15, 2, 6); // Thinner legs
+                ctx.fillRect(person.x + 1, person.y + 15, 2, 6);
             });
         }
+
 
         let peoplePositions = [];
 
@@ -716,7 +830,7 @@
             let landX = (simCanvas.width - 200) / 2 + 150; // Land starts here
             let landWidth = simCanvas.width - landX;
             let personSize = 20;
-            let buffer = 15; // Avoid overlap
+            let buffer = 10; // Avoid overlap
             let maxAttempts = 100;
 
             // Define color options
@@ -735,7 +849,7 @@
                     let personY = Math.random() * (simCanvas.height - personSize);
                     newPerson = { x: personX, y: personY };
 
-                    // Assign random colors **once** when generating the person
+                    // Assign random colors  once  when generating the person
                     let headColor = headColors[Math.floor(Math.random() * headColors.length)];
                     let shirtColor = shirtColors[Math.floor(Math.random() * shirtColors.length)];
                     let pantsColor = pantsColors[Math.floor(Math.random() * pantsColors.length)];
@@ -788,7 +902,7 @@
             }
         }
 
-        // **Generalized function to check collisions between two rectangular objects**
+        //  Generalized function to check collisions between two rectangular objects 
         function checkCollision(obj1, obj2, obj1Width, obj1Height, buffer) {
             return (
                 obj1.x < obj2.x + obj1Width + buffer &&
@@ -838,7 +952,7 @@
         //draw car
         function makeCar(vehicles){
             //draw car and initialization of car/vehicle only
-            let carCount = Math.floor(vehicles / 2); // Adjust density
+            let carCount = Math.floor(vehicles / 1); // Adjust density
             if (carPositions.length !== carCount) {
                 generateCarPositions(carCount); // Only update when needed
             }
@@ -924,24 +1038,24 @@
         //sea drawing
         let waveOffset = 0;
         let smallWaves = [];
-        let heatBubbles = [];
+        // let heatBubbles = [];
 
         function drawSea() {
-            // **Get current sea temperature from the slider**
+            //  Get current sea temperature from the slider 
             seaTemp = parseFloat(document.getElementById('temp').value) || 20;
 
-            // **Adjust sea color dynamically**
+            //  Adjust sea color dynamically 
             let blueTone = Math.max(150, 213 - (seaTemp - 20) * 10); // Cooler sea = lighter, hotter = darker
             let seaColor = `rgb(${Math.min(163 + (seaTemp - 20) * 5, 255)}, ${blueTone}, 255)`;
             simCtx.fillStyle = seaColor;
             simCtx.fillRect(0, 0, simCanvas.width * 0.4, simCanvas.height);
 
-            // **Wave Motion Settings**
-            let amplitude = 15 + (seaTemp - 20) * 3; // Higher temp = stronger waves
+            //  Wave Motion Settings 
+            let amplitude = 15 + (seaTemp - 20) * 1 - 10; // Higher temp = stronger waves
             let frequency = 0.02;
             let numWaves = 5;
 
-            // **Main Wave Effect**
+            //  Main Wave Effect 
             simCtx.fillStyle = '#4da6ff';
             simCtx.beginPath();
             for (let i = 0; i < numWaves; i++) {
@@ -956,7 +1070,7 @@
             simCtx.closePath();
             simCtx.fill();
 
-            // **Small Random Waves Near Shore**
+            //  Small Random Waves Near Shore 
             simCtx.fillStyle = '#ffffff'; // White for foam effect
             smallWaves.forEach((wave, index) => {
                 simCtx.beginPath();
@@ -971,7 +1085,7 @@
                 }
             });
 
-            // **Generate Tiny Waves Randomly**
+            //  Generate Tiny Waves Randomly 
             if (Math.random() < 0.02) {
                 smallWaves.push({
                     x: simCanvas.width * 0.2,
@@ -981,39 +1095,14 @@
                 });
             }
 
-            // **Heat Bubble Effect for Warmer Oceans**
-            if (seaTemp > 22) {
-                simCtx.fillStyle = `rgba(255, 69, 0, ${(seaTemp - 22) * 0.1})`; // Orange bubbles for heat
-                heatBubbles.forEach((bubble, index) => {
-                    simCtx.beginPath();
-                    simCtx.arc(bubble.x, bubble.y, bubble.size, 0, Math.PI * 2);
-                    simCtx.fill();
-                    bubble.y -= bubble.speed; // Move bubbles up
-
-                    if (bubble.y < 0) {
-                        heatBubbles.splice(index, 1); // Remove bubbles above surface
-                    }
-                });
-
-                // Generate bubbles more frequently when temperature is high
-                if (Math.random() < (seaTemp - 22) * 0.02) {
-                    heatBubbles.push({
-                        x: Math.random() * (simCanvas.width * 0.4),
-                        y: simCanvas.height - 10,
-                        size: Math.random() * 4 + 2,
-                        speed: Math.random() * 0.5 + 0.2
-                    });
-                }
-            }
-
             waveOffset += 1; // Animate waves
 
-            // **Draw Shoreline LAST so it's always on top**
+            //  Draw Shoreline LAST so it's always on top 
             drawShoreline();
         }
 
         function drawShoreline() {
-            // **Fixed Shoreline Color (Does NOT change with temperature)**
+            //  Fixed Shoreline Color (Does NOT change with temperature) 
             simCtx.fillStyle = '#c2a772'; // Permanent sand color
 
             simCtx.beginPath();
@@ -1035,50 +1124,6 @@
 
         // Start animation loop for sea waves
         animate();
-
-        //Drawing Legend
-        function drawLegendCar() {
-            let canvas = document.getElementById("carLegend");
-            let ctx = canvas.getContext("2d");
-
-            ctx.fillStyle = "blue"; // Car body color
-            ctx.fillRect(5, 10, 15, 20); // Car body
-
-            ctx.fillStyle = "lightgray"; // Car body color
-            ctx.fillRect(8, 14, 9, 12); // Car body
-
-            ctx.fillStyle = "black"; // Wheels
-            ctx.fillRect(1, 24, 3, 3); // Left wheel
-            ctx.fillRect(21, 24, 3, 3); // Right wheel
-
-            ctx.fillRect(1, 12, 3, 3); // Left wheel
-            ctx.fillRect(21, 12, 3, 3); // Right wheel
-
-            ctx.fillStyle = "red"; // Car body color
-            ctx.fillRect(8, 30, 8, 3); // Car body
-
-            ctx.fillStyle = "yellow"; // Car body color
-            ctx.fillRect(8, 7, 8, 3); // Car body
-
-        }
-
-        function drawLegendPerson() {
-            let canvas = document.getElementById("peopleLegend");
-            let ctx = canvas.getContext("2d");
-
-            ctx.fillStyle = "#FDD835"; // Head
-            ctx.beginPath();
-            ctx.arc(15, 8, 3, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = "#9C27B0"; // Body
-            ctx.fillRect(12, 13, 6, 10);
-
-            ctx.fillStyle = "black"; // Legs
-            ctx.fillRect(12, 23, 2, 5);
-            ctx.fillRect(16, 23, 2, 5);
-        }
-
         updateSimulation();
     </script>
 </body>
